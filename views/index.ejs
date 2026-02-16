@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Todo App</title>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f7f9fc;
+            /* Soft blue-grey background */
+            --text-color: #333;
+            --accent-color: #222;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            padding-top: 40px;
+            padding-bottom: 40px;
+        }
+
+        .app-container {
+            background-color: var(--card-bg);
+            width: 100%;
+            max-width: 720px;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
+        }
+
+        h1 {
+            font-weight: 300;
+            letter-spacing: -1px;
+            color: var(--accent-color);
+        }
+
+        /* Minimalist Input */
+        .form-control,
+        .form-select {
+            border: none;
+            border-bottom: 1px solid #ddd;
+            border-radius: 0;
+            background: transparent;
+            box-shadow: none !important;
+            padding-left: 0;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--accent-color);
+            background: transparent;
+        }
+
+        /* Minimalist Button */
+        .btn-primary {
+            background-color: var(--accent-color);
+            border: none;
+            border-radius: 4px;
+            padding: 8px 20px;
+            font-weight: 500;
+        }
+
+        .btn-primary:hover {
+            background-color: #000;
+        }
+
+        .btn-danger {
+            background: transparent;
+            color: #ccc;
+            border: none;
+            padding: 0;
+        }
+
+        .btn-danger:hover {
+            color: #dc3545;
+            background: transparent;
+        }
+
+        /* List Item */
+        .list-group-item {
+            border: none;
+            background: transparent;
+            border-bottom: 1px solid #f0f0f0;
+            padding: 1.5rem 0;
+            margin-bottom: 0;
+        }
+
+        .list-group-item:last-child {
+            border-bottom: none;
+        }
+
+        .task-checkbox {
+            width: 1.2em;
+            height: 1.2em;
+            border-radius: 50%;
+            /* Circle checkbox */
+            border: 1px solid #ccc;
+            cursor: pointer;
+        }
+
+        .task-checkbox:checked {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+
+        .task-checkbox:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .completed {
+            text-decoration: line-through;
+            color: #aaa;
+        }
+
+        .badge {
+            font-weight: 400;
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 0.75rem;
+        }
+
+        .bg-secondary {
+            background-color: #eee !important;
+            color: #888;
+        }
+
+        .bg-success {
+            background-color: #d1e7dd !important;
+            color: #0f5132;
+        }
+
+        /* Custom Assignment Highlight */
+        .task-item {
+            transition: all 0.2s ease;
+        }
+
+        .assigned-me {
+            opacity: 1;
+        }
+
+        .not-assigned {
+            opacity: 0.4;
+        }
+
+        /* Hide Progress bar container background */
+        .progress {
+            background-color: #eee;
+            border-radius: 10px;
+            height: 6px !important;
+        }
+
+        /* User Switcher */
+        #activeUserSelect {
+            background-color: #e9ecef;
+            border: 1px solid #ced4da;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #495057;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: none !important;
+        }
+
+        #activeUserSelect:hover {
+            background-color: #dee2e6;
+            border-color: #adb5bd;
+        }
+
+        #activeUserSelect:focus {
+            ring: 2px solid var(--accent-color);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-container">
+        <div class="d-flex justify-content-between align-items-end mb-5">
+            <div>
+                <small class="text-uppercase text-muted" style="letter-spacing: 2px; font-size: 0.7rem;">Todo
+                    App</small>
+                <h1 class="mt-2 mb-0">My Tasks</h1>
+            </div>
+            <div class="d-flex align-items-center">
+                <span class="me-2 small text-muted">Viewing as:</span>
+                <select id="activeUserSelect" class="form-select w-auto">
+                    <% users.forEach(u=> { %>
+                        <option value="<%= u.username %>" data-role="<%= u.role %>">
+                            <%= u.fullName %>
+                        </option>
+                        <% }) %>
+                </select>
+            </div>
+        </div>
+
+        <!-- Progress (Minimal) -->
+        <div class="mb-5">
+            <div class="d-flex justify-content-between mb-2">
+                <small class="text-muted">Progress</small>
+                <small class="text-muted" id="progressText">0%</small>
+            </div>
+            <div class="progress">
+                <div id="progressBar" class="progress-bar" role="progressbar" style="width: 0%;"></div>
+            </div>
+        </div>
+
+        <!-- Add Task (Input Only) -->
+        <form id="addTaskForm" class="mb-5">
+            <div class="row g-2 align-items-end">
+                <div class="col-8">
+                    <input type="text" class="form-control" id="taskTitleInput" placeholder="What needs to be done?"
+                        required style="font-size: 1.1rem; padding-bottom: 10px;">
+                </div>
+                <div class="col-3">
+                    <input type="text" class="form-control" id="assigneesInput" placeholder="Assign to (opt)"
+                        style="font-size: 0.9rem; padding-bottom: 10px;">
+                </div>
+                <div class="col-1 text-end">
+                    <button type="submit" class="btn btn-link text-dark p-0"
+                        style="font-size: 1.5rem; text-decoration: none;">+</button>
+                </div>
+            </div>
+        </form>
+
+        <!-- Task List -->
+        <ul class="list-group list-group-flush" id="taskList">
+            <% tasks.forEach(task=> { %>
+                <li class="list-group-item d-flex align-items-center task-item"
+                    data-assigned="<%= task.assignedTo.map(u => u.username).join(',') %>">
+
+                    <input class="form-check-input me-3 task-checkbox mt-0" type="checkbox" data-id="<%= task._id %>">
+
+                    <div class="flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-baseline">
+                            <span class="task-title <%= task.isDone ? 'completed' : '' %>" style="font-size: 1rem;">
+                                <%= task.title %>
+                            </span>
+                            <small class="text-muted ms-2" style="font-size: 0.75rem;">
+                                By <%= task.creatorId ? task.creatorId.fullName : 'Unknown' %>
+                            </small>
+                        </div>
+
+                        <!-- Assignees Badges -->
+                        <div class="mt-1">
+                            <% task.assignedTo.forEach(u=> { %>
+                                <% const isUserDone=task.completedBy.some(cb=> cb.username === u.username); %>
+                                    <span class="badge <%= isUserDone ? 'bg-success' : 'bg-secondary' %> me-1">
+                                        <%= u.username %>
+                                    </span>
+                                    <% }) %>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-danger ms-3" data-id="<%= task._id %>">&times;</button>
+                </li>
+                <% }) %>
+        </ul>
+
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        const activeUserSelect = document.getElementById('activeUserSelect');
+        const taskList = document.getElementById('taskList');
+
+        // Save/Restore selected user
+        const savedUser = localStorage.getItem('activeUser');
+        if (savedUser) {
+            activeUserSelect.value = savedUser;
+        }
+
+        activeUserSelect.addEventListener('change', () => {
+            localStorage.setItem('activeUser', activeUserSelect.value);
+            renderTaskState(); // Re-render check state based on new user
+        });
+
+        // Initial render
+        renderTaskState();
+
+        function getActiveUser() {
+            return activeUserSelect.value;
+        }
+
+        function renderTaskState() {
+            const currentUser = getActiveUser();
+            const items = document.querySelectorAll('.task-item');
+
+            items.forEach(item => {
+                const assigned = item.dataset.assigned.split(',');
+                const checkbox = item.querySelector('.task-checkbox');
+
+                // Clear previous states
+                item.classList.remove('border-primary', 'shadow-sm');
+
+                // Clear state
+                item.classList.remove('assigned-me', 'not-assigned');
+
+                // Visible/Disabled logic
+                if (!assigned.includes(currentUser)) {
+                    checkbox.disabled = true;
+                    checkbox.title = "Bạn không được giao task này";
+                    item.classList.add('not-assigned');
+                } else {
+                    checkbox.disabled = false;
+                    checkbox.title = "Task của bạn";
+                    item.classList.add('assigned-me');
+                }
+
+                // Checked logic
+                const badges = item.querySelectorAll('.badge');
+                let isMyDone = false;
+                badges.forEach(b => {
+                    if (b.textContent.trim() === currentUser && b.classList.contains('bg-success')) {
+                        isMyDone = true;
+                    }
+                });
+                checkbox.checked = isMyDone;
+            });
+
+            updateProgressBar();
+        }
+
+        function updateProgressBar() {
+            const tasks = document.querySelectorAll('.task-title');
+            const total = tasks.length;
+            const completed = document.querySelectorAll('.task-title.completed').length; // Changed selector class
+            const percent = total === 0 ? 0 : Math.round((completed / total) * 100);
+
+            const pb = document.getElementById('progressBar');
+            const txt = document.getElementById('progressText');
+
+            pb.style.width = `${percent}%`;
+            if (txt) txt.textContent = `${percent}%`; // Update text separately
+        }
+
+        // Add Task
+        document.getElementById('addTaskForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const title = document.getElementById('taskTitleInput').value;
+            const assignees = document.getElementById('assigneesInput').value;
+            const username = getActiveUser();
+
+            try {
+                const res = await fetch('/tasks', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, username, assignees })
+                });
+
+                if (res.ok) {
+                    window.location.reload();
+                } else {
+                    const data = await res.json();
+                    alert(data.error || 'Lỗi!');
+                }
+            } catch (err) { alert('Lỗi kết nối!'); }
+        });
+
+        // Toggle Done
+        taskList.addEventListener('change', async (e) => {
+            if (e.target.classList.contains('task-checkbox')) {
+                const id = e.target.dataset.id;
+                const activeUser = getActiveUser();
+
+                try {
+                    const res = await fetch(`/tasks/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ activeUser })
+                    });
+
+                    if (res.ok) {
+                        window.location.reload(); // Reload to update badges and global status
+                    } else {
+                        alert('Lỗi cập nhật!');
+                        e.target.checked = !e.target.checked;
+                    }
+                } catch (err) {
+                    console.error(err);
+                    e.target.checked = !e.target.checked;
+                }
+            }
+        });
+
+        // Delete Task
+        taskList.addEventListener('click', async (e) => {
+            if (e.target.classList.contains('delete-btn')) {
+                if (!confirm('Xóa nhé?')) return;
+                const id = e.target.dataset.id;
+                await fetch(`/tasks/${id}`, { method: 'DELETE' });
+                window.location.reload();
+            }
+        });
+    </script>
+</body>
+
+</html>
