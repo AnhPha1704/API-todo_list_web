@@ -1,7 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
-const { User, Task } = require('./models'); // Đảm bảo file models.js của bạn nằm cùng thư mục
+const { User, Task } = require('./models');
 
 const app = express();
 
@@ -9,16 +9,15 @@ const app = express();
 app.set('view engine', 'ejs');
 app.set('views', './views');
 
-// Middleware để đọc được dữ liệu JSON từ request body
+// Middleware để đọc dữ liệu JSON
 app.use(express.json());
 
-// 1. Kết nối MongoDB (Thay đổi link nếu bạn dùng Atlas hoặc port khác)
-// Cấu trúc: mongodb://username:password@localhost:27017/DatabaseName?authSource=admin
+// Kết nối MongoDB
 mongoose.connect('mongodb://admin:12345678@localhost:27017/todo_app?authSource=admin')
-    .then(() => console.log("Connected to MongoDB with Auth..."))
+    .then(() => console.log("Connected to MongoDB..."))
     .catch(err => console.error("Could not connect to MongoDB:", err));
 
-// 2. API Đăng ký (Level 1: Mã hóa password)cks
+// API Đăng ký
 app.post('/register', async (req, res) => {
     try {
         const { username, password, fullName } = req.body;
@@ -37,17 +36,16 @@ app.post('/register', async (req, res) => {
     }
 });
 
-// 3. API Lấy tất cả các task
+// API Lấy tất cả các task
 app.get('/tasks', async (req, res) => {
     const tasks = await Task.find().populate('userId', 'fullName');
     res.json(tasks);
 });
 
-// 6. API Tạo Task (Input: title, username)
-// 6. API Tạo Task (Level 3: Multi-assign)
+// API Tạo Task
 app.post('/tasks', async (req, res) => {
     try {
-        const { title, username, assignees } = req.body; // assignees: string "user1, user2"
+        const { title, username, assignees } = req.body;
 
         // 1. Xác định người tạo (Creator)
         const creator = await User.findOne({ username });
@@ -92,7 +90,7 @@ app.post('/tasks', async (req, res) => {
     }
 });
 
-// 7. Lấy task theo username
+// Lấy task theo username
 app.get('/tasks/user/:username', async (req, res) => {
     try {
         const { username } = req.params;
@@ -108,7 +106,7 @@ app.get('/tasks/user/:username', async (req, res) => {
     }
 });
 
-// 8. Xuất các task trong ngày hiện tại
+// Xuất các task trong ngày
 app.get('/tasks/today', async (req, res) => {
     try {
         const startOfDay = new Date();
@@ -127,7 +125,7 @@ app.get('/tasks/today', async (req, res) => {
     }
 });
 
-// 9. Xuất các task chưa hoàn thành
+// Xuất các task chưa hoàn thành
 app.get('/tasks/incomplete', async (req, res) => {
     try {
         const tasks = await Task.find({ isDone: false }).populate('userId', 'username');
@@ -137,20 +135,14 @@ app.get('/tasks/incomplete', async (req, res) => {
     }
 });
 
-// 4. Xuất các task với những user có họ là 'Nguyễn'
-// 4. Xuất các task với những user có họ (hoặc tên) khớp với từ khóa
+// Tìm task theo tên user
 app.get('/tasks/:name', async (req, res) => {
     try {
         const { name } = req.params;
-        // Kiểm tra tránh conflict với các keyword khác nếu lỡ define sai thứ tự (dù hiện tại thứ tự đã đúng)
         if (['today', 'incomplete'].includes(name.toLowerCase())) {
-            // Nếu code chạy vào đây nghĩa là route today/incomplete chưa bắt được, 
-            // nhưng vì thứ tự define ở trên nên chắc chắn không vào đây. 
-            // Tuy nhiên, logic này handle cho trường hợp tổng quát.
             return res.status(404).json({ error: "Invalid parameter" });
         }
 
-        // Tìm các user có họ/tên bắt đầu bằng từ khóa (không phân biệt hoa thường)
         const regex = new RegExp(`^${name}`, 'i');
         const users = await User.find({ fullName: { $regex: regex } });
         const userIds = users.map(u => u._id);
@@ -162,16 +154,13 @@ app.get('/tasks/:name', async (req, res) => {
     }
 });
 
-// Level 2 & 3: Web Interface Route
+// Web Interface
 app.get('/', async (req, res) => {
     try {
-        const users = await User.find(); // Lấy list users để làm dropdown "Login"
-        // Lấy tất cả tasks để hiển thị (Level 3 sẽ filter ở client hoặc server sau, 
-        // nhưng để đơn giản ta lấy hết rồi filter view hoặc cải tiến sau)
-        // Level 3: Populate cả creator và assignedTo
+        const users = await User.find();
         const tasks = await Task.find()
             .populate('creatorId', 'fullName')
-            .populate('assignedTo', 'username fullName') // Lấy username để hiện
+            .populate('assignedTo', 'username fullName')
             .populate('completedBy', 'username');
 
         res.render('index', { tasks, users });
@@ -181,7 +170,7 @@ app.get('/', async (req, res) => {
     }
 });
 
-// Update Task (Toggle Done) - Level 3 Logic
+// Update Task (Toggle Done)
 app.put('/tasks/:id', async (req, res) => {
     try {
         const { id } = req.params;
@@ -239,7 +228,7 @@ app.delete('/tasks/:id', async (req, res) => {
     }
 });
 
-// 5. Khởi chạy server
+// Khởi chạy server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
