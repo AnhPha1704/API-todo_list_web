@@ -17,7 +17,7 @@ async function testLevel1() {
             password,
             fullName
         });
-        console.log("✅ User created.");
+        console.log("User created.");
 
         // 2. Create Task
         console.log("Creating tasks...");
@@ -29,31 +29,31 @@ async function testLevel1() {
             title: "Task 2: Practice MongoDB",
             username
         });
-        console.log("✅ Tasks created.");
+        console.log("Tasks created.");
 
         // 3. Get All Tasks
         const allTasks = await axios.get(`${BASE_URL}/tasks`);
-        if (allTasks.data.length >= 2) console.log("✅ Get All Tasks working.");
+        if (allTasks.data.length >= 2) console.log("Get All Tasks working.");
 
         // 4. Get Tasks by User
         const userTasks = await axios.get(`${BASE_URL}/tasks/user/${username}`);
-        if (userTasks.data.length === 2) console.log("✅ Get Tasks by User working.");
+        if (userTasks.data.length === 2) console.log("Get Tasks by User working.");
 
         // 5. Get Today's Tasks
         const todayTasks = await axios.get(`${BASE_URL}/tasks/today`);
-        if (todayTasks.data.length > 0) console.log("✅ Get Today's Tasks working.");
+        if (todayTasks.data.length > 0) console.log("Get Today's Tasks working.");
 
         // 6. Get Incomplete Tasks
         const incompleteTasks = await axios.get(`${BASE_URL}/tasks/incomplete`);
-        if (incompleteTasks.data.some(t => t.title.includes("Learn Node.js"))) console.log("✅ Get Incomplete Tasks working.");
+        if (incompleteTasks.data.some(t => t.title.includes("Learn Node.js"))) console.log("Get Incomplete Tasks working.");
 
         // 7. Generic Nguyen Check
         const nguyenTasks = await axios.get(`${BASE_URL}/tasks/tran`);
-        if (nguyenTasks.data.length >= 0) console.log("✅ Get Users Tasks working (could be empty).");
+        if (nguyenTasks.data.length >= 0) console.log("Get Users Tasks working (could be empty).");
 
         console.log("🎉 All Level 1 tests passed!");
     } catch (error) {
-        console.error("❌ Test failed:", error.response ? error.response.data : error.message);
+        console.error("Test failed:", error.response ? error.response.data : error.message);
     }
 }
 
